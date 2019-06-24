@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="light_orange">#FCBB92</color>
+    <color name="orange_tag">#faa975</color>
+    <color name="light_orange2">#FA8317</color>
+    <color name="start_orange">#FF8500</color>
+    <color name="end_orange">#F64927</color>
+
+    <!-- 主题色-->
+    <color name="orangeTab">#fa8317</color>
+    <color name="light_pink">#FFEDDD</color>
+    <color name="pink_background">#FFF6EE</color>
+
+</resources>
