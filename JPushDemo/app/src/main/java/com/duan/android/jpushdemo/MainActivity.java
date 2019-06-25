@@ -1,12 +1,19 @@
 package com.duan.android.jpushdemo;
 
+import android.*;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +22,7 @@ import android.widget.Toast;
 
 import com.duan.android.jpushdemo.jpush.ExampleUtil;
 import com.duan.android.jpushdemo.jpush.PushSetActivity;
+import com.duan.android.jpushdemo.utils.SoundUtils;
 
 import cn.jpush.android.api.JPushInterface;
 
@@ -30,11 +38,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText msgText;
 
     public static boolean isForeground = false;
+
+    private Context context;
+    private static Context cxt;
+    private static final String TAG = "MainActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        context = this;
+        cxt = this;
+        ExampleApplication.demoActivity = this;
+
         initView();
+
+
+        PackageManager pkgManager = getPackageManager();
+
+        // 读写 sd card 权限非常重要, android6.0默认禁止的, 建议初始化之前就弹窗让用户赋予该权限
+        boolean sdCardWritePermission =
+                pkgManager.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, getPackageName()) == PackageManager.PERMISSION_GRANTED;
+
+        // read phone state用于获取 imei 设备信息
+        boolean phoneSatePermission =
+                pkgManager.checkPermission(android.Manifest.permission.READ_PHONE_STATE, getPackageName()) == PackageManager.PERMISSION_GRANTED;
+
+        if (Build.VERSION.SDK_INT >= 23 && !sdCardWritePermission || !phoneSatePermission) {
+            requestPermission();
+        } else {
+            //PushManager.getInstance().initialize(this.getApplicationContext(), userPushService);
+        }
+
+
         registerMessageReceiver();  // used for receive msg
     }
 
@@ -134,6 +170,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         super.onDestroy();
     }
+
+
+
+
+
+    private static final int REQUEST_PERMISSION = 0;
+    private void requestPermission() {
+        ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_PHONE_STATE},
+                REQUEST_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERMISSION) {
+            if ((grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED)) {
+                //PushManager.getInstance().initialize(this.getApplicationContext(), userPushService);
+            } else {
+                Log.e(TAG, "We highly recommend that you need to grant the special permissions before initializing the SDK, otherwise some "
+                        + "functions will not work");
+                //PushManager.getInstance().initialize(this.getApplicationContext(), userPushService);
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+
+    public static void showPromptMessage1(String message){
+        Toast.makeText(cxt, message, Toast.LENGTH_LONG).show();
+        playMusic(message);   // 接收到推送播放提示音
+    }
+
+    /**  播放声音 */
+    private static String titleOrdered= "12";
+    private static String titleQuote = "11";
+    private static void playMusic(String message){
+        Log.e(TAG, "=========  播放声音  =============");
+        if (message == null){
+            SoundUtils.playSound(R.raw.test);
+        }else {
+            if (TextUtils.equals(titleOrdered, message)){
+                SoundUtils.playSound(R.raw.ordered);
+            }else if (TextUtils.equals(titleQuote, message)){
+                SoundUtils.playSound(R.raw.quote);
+            }
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
 
 
     //for receive customer msg from jpush server
